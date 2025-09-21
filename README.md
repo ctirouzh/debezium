@@ -123,4 +123,4 @@ curl http://localhost:9200/products/_search
 -[ ] Implement some search APIs
 
 ### 💬 License
-This project is licensed under the MIT License.
+This project is licensed under the Apache-2.0 license.
