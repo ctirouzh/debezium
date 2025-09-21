@@ -1,0 +1,39 @@
+POST http://localhost:8083/connectors
+Content-Type: application/json
+
+{
+  "name": "debezium.products",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "ninja.mysql",
+    "database.port": "3306",
+    "database.user": "debezium",
+    "database.password": "dbz",
+    "database.server.id": "1",
+    "database.include.list": "debezium",
+    "table.include.list": "debezium.products,debezium.prices,debezium.media",
+    "snapshot.mode": "initial",
+    "topic.prefix": "cdc",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+    "schema.history.internal.kafka.topic": "schema-changes.debezium"
+  }
+}
+
+####
+#PUT http://localhost:8083/connector-plugins/io.debezium.connector.mysql.MySqlConnector/config/validate
+#Content-Type: application/json
+#
+#{
+#  "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+#  "database.hostname": "ninja.mysql",
+#  "database.port": "3306",
+#  "database.user": "debezium",
+#  "database.password": "dbz",
+#  "database.server.id": "184054",
+#  "database.include.list": "debezium",
+#  "table.include.list": "debezium.products,debezium.prices,debezium.media",
+#  "snapshot.mode": "initial",
+#  "topic.prefix": "cdc",
+#  "database.history.internal.kafka.bootstrap.servers": "localhost:9092",
+#  "database.history.internal.kafka.topic": "schema-changes.debezium"
+#}
