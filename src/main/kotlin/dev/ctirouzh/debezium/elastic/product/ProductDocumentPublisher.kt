@@ -10,7 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
 @Component
-class ProductCdcConsumer(
+class ProductDocumentPublisher(
   @param:Autowired private val productDocumentRepository: ProductDocumentRepository,
   @param:Autowired private val productService: ProductService // Use the service from the previous step
 ) {
@@ -24,7 +24,7 @@ class ProductCdcConsumer(
     ],
     containerFactory = "batchListenerContainerFactory",
   )
-  fun handleDebeziumEvent(events: List<String>) {
+  fun syncProductDocuments(events: List<String>) {
     val productIdsToUpdate = mutableSetOf<Long>()
     for (event in events) {
       println(event)
@@ -52,7 +52,7 @@ class ProductCdcConsumer(
     // Use the new service method to fetch all products and their media in a single batch
     val products = productService.getProductsWithMediaAndPrices(productIdsToUpdate)
 
-    val documentsToSave = products.map { convertToProductDocument(it) }
+    val documentsToSave = products.map { it.toDocument() }
 
     if (documentsToSave.isNotEmpty()) {
       productDocumentRepository.saveAll(documentsToSave)
@@ -65,40 +65,40 @@ class ProductCdcConsumer(
       productDocumentRepository.deleteAllById(deletedProductIds.map { it.toString() })
     }
   }
+}
 
-  private fun convertToProductDocument(product: Product): ProductDocument {
-    val prices = product.prices.map {
-      ProductDocument.PriceDocument(
-        id = it.id?.toString() ?: "",
-        amount = it.amount,
-        currency = it.currency.toString(),
-        priceType = it.priceType.toString(),
-        validFrom = it.validFrom,
-        validTo = it.validTo,
-      )
-    }
-
-    val media = product.media.map {
-      ProductDocument.MediaDocument(
-        id = it.id?.toString() ?: "",
-        url = it.url,
-        mediaType = it.mediaType.toString(),
-        altText = it.altText,
-        sortOrder = it.sortOrder,
-      )
-    }
-
-    return ProductDocument(
-      id = product.id?.toString() ?: "",
-      name = product.name,
-      description = product.description,
-      prices = prices,
-      media = media,
-      status = product.status.toString(),
-      createdAt = product.createdAt,
-      updatedAt = product.updatedAt,
+private fun Product.toDocument(): ProductDocument {
+  val prices = this.prices.map {
+    ProductDocument.PriceDocument(
+      id = it.id?.toString() ?: "",
+      amount = it.amount,
+      currency = it.currency.toString(),
+      priceType = it.priceType.toString(),
+      validFrom = it.validFrom,
+      validTo = it.validTo,
     )
   }
+
+  val media = this.media.map {
+    ProductDocument.MediaDocument(
+      id = it.id?.toString() ?: "",
+      url = it.url,
+      mediaType = it.mediaType.toString(),
+      altText = it.altText,
+      sortOrder = it.sortOrder,
+    )
+  }
+
+  return ProductDocument(
+    id = this.id?.toString() ?: "",
+    name = this.name,
+    description = this.description,
+    prices = prices,
+    media = media,
+    status = this.status.toString(),
+    createdAt = this.createdAt,
+    updatedAt = this.updatedAt,
+  )
 }
 
 private fun JsonNode.getOpNodeId(op: String, field: String): Long? {
