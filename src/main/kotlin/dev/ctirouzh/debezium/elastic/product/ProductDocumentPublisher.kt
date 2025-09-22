@@ -1,5 +1,6 @@
 package dev.ctirouzh.debezium.elastic.product
 
+import co.elastic.clients.elasticsearch._types.analysis.SnowballAnalyzer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -8,6 +9,8 @@ import dev.ctirouzh.debezium.services.ProductService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
+import java.time.Instant
+import java.util.Date
 
 @Component
 class ProductDocumentPublisher(
@@ -25,9 +28,9 @@ class ProductDocumentPublisher(
     containerFactory = "batchListenerContainerFactory",
   )
   fun syncProductDocuments(events: List<String>) {
+    println("[${Instant.now() }] received ${events.size} events")
     val productIdsToUpdate = mutableSetOf<Long>()
     for (event in events) {
-      println(event)
       val payload: JsonNode = objectMapper.readTree(event)
       val sourceNode = payload.get("source")
       val table = sourceNode.get("table").asText()
